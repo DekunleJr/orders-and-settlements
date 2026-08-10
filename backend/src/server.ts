@@ -1,6 +1,11 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import swaggerJsDoc from "swagger-jsdoc";
+import swaggerUi from "swagger-ui-express";
+
+import authRoutes from "./routes/auth";
+import orderRoutes from "./routes/orders";
 
 dotenv.config();
 
@@ -9,6 +14,38 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Swagger configuration
+const swaggerOptions = {
+  definition: {
+    openapi: "3.0.0",
+    info: {
+      title: "Orders and Settlements API",
+      version: "1.0.0",
+      description: "REST API for managing orders and payments",
+    },
+    servers: [
+      {
+        url: `http://localhost:${process.env.PORT || 5000}`,
+        description: "Development server",
+      },
+    ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+        },
+      },
+    },
+  },
+  apis: ["./src/routes/*.ts", "./src/controllers/*.ts"],
+};
+
+const swaggerDocs = swaggerJsDoc(swaggerOptions);
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+
+// Health check
 app.get("/api/health", (_req, res) => {
   res.json({
     status: "ok",
@@ -16,8 +53,13 @@ app.get("/api/health", (_req, res) => {
   });
 });
 
+// Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/orders", orderRoutes);
+
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Swagger docs available at http://localhost:${PORT}/api-docs`);
 });

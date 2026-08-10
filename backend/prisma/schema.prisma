@@ -10,4 +10,62 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  schemas  = ["orders_and_settlements"]
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  orders        Order[]
+
+  @@schema("orders_and_settlements")
+  @@map("users")
+}
+
+model Order {
+  id            String    @id @default(uuid())
+  userId        String
+  customerName  String
+  dueDate       DateTime
+  status        String    @default("pending")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lineItems     LineItem[]
+  payments      Payment[]
+
+  @@schema("orders_and_settlements")
+  @@map("orders")
+}
+
+model LineItem {
+  id            String    @id @default(uuid())
+  orderId       String
+  description   String
+  quantity      Int       @db.Integer
+  unitPrice     Float     @db.DoublePrecision
+
+  order         Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@schema("orders_and_settlements")
+  @@map("line_items")
+}
+
+model Payment {
+  id            String    @id @default(uuid())
+  orderId       String
+  amount        Float     @db.DoublePrecision
+  date          DateTime  @default(now())
+  note          String?
+  createdAt     DateTime  @default(now())
+
+  order         Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@schema("orders_and_settlements")
+  @@map("payments")
 }
