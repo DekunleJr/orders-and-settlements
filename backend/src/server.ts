@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import swaggerJsDoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 
+import prisma from "./config/database";
 import authRoutes from "./routes/auth";
 import orderRoutes from "./routes/orders";
 
@@ -59,7 +60,29 @@ app.use("/api/orders", orderRoutes);
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-  console.log(`Swagger docs available at http://localhost:${PORT}/api-docs`);
-});
+async function connectToDatabase() {
+  try {
+    await prisma.$connect();
+    console.log("✅ Database connected successfully");
+    return true;
+  } catch (error) {
+    console.error("❌ Failed to connect to database:", error);
+    return false;
+  }
+}
+
+async function startServer() {
+  const isConnected = await connectToDatabase();
+
+  if (!isConnected) {
+    console.error("❌ Server startup aborted: database connection failed");
+    process.exit(1);
+  }
+
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Swagger docs available at http://localhost:${PORT}/api-docs`);
+  });
+}
+
+startServer();
