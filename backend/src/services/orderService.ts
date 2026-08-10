@@ -40,6 +40,31 @@ export const calculateOrderStatus = async (orderId: string) => {
   return "pending";
 };
 
+export const calculateOrderStatusFromData = (order: any) => {
+  const orderTotal = order.lineItems.reduce(
+    (sum: number, item: any) => sum + (item.quantity * item.unitPrice),
+    0
+  );
+  const amountPaid = (order.payments || []).reduce((sum: number, payment: any) => sum + payment.amount, 0);
+  const isFullyPaid = amountPaid >= orderTotal;
+
+  if (isFullyPaid) {
+    return "paid";
+  }
+
+  const isOverdue = new Date() > order.dueDate;
+
+  if (isOverdue) {
+    return "overdue";
+  }
+
+  if (amountPaid > 0) {
+    return "partially_paid";
+  }
+
+  return "pending";
+};
+
 export const getOrderWithCalculations = async (orderId: string) => {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
@@ -62,10 +87,24 @@ export const getOrderWithCalculations = async (orderId: string) => {
   const amountPaid = order.payments.reduce((sum: number, payment: any) => sum + payment.amount, 0);
   const amountDue = orderTotal - amountPaid;
 
+  // Dynamically calculate the current status (handles overdue detection)
+  const calculatedStatus = calculateOrderStatusFromData(order);
+
+  console.log(`Calculated status for order ${orderId}: ${calculatedStatus}`);
+
+  // Persist status change to DB if needed
+  if (calculatedStatus !== order.status) {
+    await prisma.order.update({
+      where: { id: orderId },
+      data: { status: calculatedStatus },
+    });
+  }
+
   return {
     ...order,
     orderTotal,
     amountPaid,
     amountDue,
+    status: calculatedStatus,
   };
 };

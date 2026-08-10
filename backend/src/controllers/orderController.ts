@@ -62,48 +62,86 @@ export const createOrder = async (req: Request, res: Response) => {
   }
 };
 
-export const getOrders = async (req: Request, res: Response) => {
-  try {
-    const userId = req.user!.userId;
-    const status = req.query.status as string | undefined;
+// export const getOrders = async (req: Request, res: Response) => {
+//   try {
+//     const userId = req.user!.userId;
+//     const status = req.query.status as string | undefined;
 
-    const where: any = { userId };
-    if (status) {
-      where.status = status;
-    }
+//     const where: any = { userId };
+//     if (status) {
+//       where.status = status;
+//     }
 
-    const orders = await prisma.order.findMany({
-      where,
-      include: {
-        lineItems: true,
-        payments: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+//     const orders = await prisma.order.findMany({
+//       where,
+//       include: {
+//         lineItems: true,
+//         payments: true,
+//       },
+//       orderBy: { createdAt: 'desc' },
+//     });
 
-    const ordersWithCalculations = orders.map((order: any) => {
-      const orderTotal = order.lineItems.reduce(
-        (sum: number, item: any) => sum + (item.quantity * item.unitPrice),
-        0
-      );
-      const amountPaid = order.payments.reduce((sum: number, payment: any) => sum + payment.amount, 0);
-      const amountDue = orderTotal - amountPaid;
+//     const ordersWithCalculations = orders.map((order: any) => {
+//       const orderTotal = order.lineItems.reduce(
+//         (sum: number, item: any) => sum + (item.quantity * item.unitPrice),
+//         0
+//       );
+//       const amountPaid = order.payments.reduce((sum: number, payment: any) => sum + payment.amount, 0);
+//       const amountDue = orderTotal - amountPaid;
 
-      return {
-        ...order,
-        orderTotal,
-        amountPaid,
-        amountDue,
-      };
-    });
+//       return {
+//         ...order,
+//         orderTotal,
+//         amountPaid,
+//         amountDue,
+//       };
+//     });
 
-    return res.status(200).json(ordersWithCalculations);
-  } catch (error) {
-    return res.status(500).json({
-      error: "Internal Server Error",
-      message: "Failed to fetch orders",
-    });
-  }
+//     return res.status(200).json(ordersWithCalculations);
+//   } catch (error) {
+//     return res.status(500).json({
+//       error: "Internal Server Error",
+//       message: "Failed to fetch orders",
+//     });
+//   }
+// };
+
+export const getOrders = async (req: Request, res: Response) => { 
+  try { 
+    const userId = req.user!.userId; 
+    const status = req.query.status as string | undefined; 
+    
+    const where: any = { userId }; 
+    
+    if (status) { where.status = status; } 
+    // First get the orders belonging to the user 
+    const orders = await prisma.order.findMany({ 
+      where, 
+      select: { 
+        id: true, 
+      }, 
+      orderBy: { 
+        createdAt: "desc", 
+      }, 
+    }); 
+    // Recalculate status and amounts for each order 
+    const ordersWithCalculations = await Promise.all( 
+      orders.map((order) => getOrderWithCalculations(order.id)) 
+    ); 
+    // Remove any null values 
+    const validOrders = ordersWithCalculations.filter( 
+      (order) => order !== null 
+    ); 
+    
+    return res.status(200).json(validOrders); 
+  } catch (error) { 
+    console.error("Error fetching orders:", error); 
+    
+    return res.status(500).json({ 
+      error: "Internal Server Error", 
+      message: "Failed to fetch orders", 
+    }); 
+  } 
 };
 
 export const getOrderById = async (req: Request, res: Response) => {
