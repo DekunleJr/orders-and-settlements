@@ -24,8 +24,9 @@ ENV NODE_ENV=production
 COPY package*.json ./
 RUN npm install --omit=dev
 
-# Copy compiled output (includes generated prisma client) + prisma schema
+# Copy compiled output (includes generated prisma client) + prisma schema + source (for Swagger route scanning)
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/src ./src
 
 CMD ["node", "dist/server.js"]
