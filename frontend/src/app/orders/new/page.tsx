@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
+import { SkeletonForm } from "@/components/Skeleton";
 import { formatCurrency, toISODateTime } from "@/lib/utils";
 
 interface LineItemForm {
@@ -87,8 +88,21 @@ export default function NewOrderPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-500">Loading...</div>
+      <div className="min-h-screen bg-linear-to-br from-slate-50 to-indigo-50">
+        <nav className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-40">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between h-16 items-center">
+              <div className="h-6 w-6 rounded-full animate-spin border-2 border-blue-600 border-t-transparent" />
+              <div className="flex items-center space-x-4">
+                <div className="skeleton h-4 w-40 rounded" />
+                <div className="skeleton h-4 w-32 rounded" />
+              </div>
+            </div>
+          </div>
+        </nav>
+        <main className="max-w-3xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+          <SkeletonForm />
+        </main>
       </div>
     );
   }
@@ -99,31 +113,31 @@ export default function NewOrderPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 to-indigo-50">
+      <nav className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             <div className="flex items-center space-x-4">
-              <Link href="/" className="text-sm text-blue-600 hover:text-blue-900">
+              <Link href="/" className="text-sm text-blue-600 hover:text-blue-900 font-medium transition-colors">
                 ← Back to Dashboard
               </Link>
-              <h1 className="text-xl font-bold text-gray-900">New Order</h1>
+              <h1 className="text-xl font-bold gradient-text">New Order</h1>
             </div>
           </div>
         </div>
       </nav>
 
       <main className="max-w-3xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <form onSubmit={handleSubmit} className="bg-white shadow rounded-lg p-6">
+        <form onSubmit={handleSubmit} className="bg-white shadow-xl rounded-2xl p-8 card-hover">
           {error && (
-            <div className="rounded-md bg-red-50 p-4 mb-4">
-              <div className="text-sm text-red-700">{error}</div>
+            <div className="rounded-md bg-red-50 border border-red-200 p-4 mb-6 fade-in">
+              <div className="text-sm text-red-700 font-medium">{error}</div>
             </div>
           )}
 
           <div className="space-y-6">
             <div>
-              <label htmlFor="customerName" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="customerName" className="block text-sm font-semibold text-gray-700 mb-2">
                 Customer Name
               </label>
               <input
@@ -132,13 +146,13 @@ export default function NewOrderPage() {
                 required
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 placeholder="Acme Corp"
               />
             </div>
 
             <div>
-              <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="dueDate" className="block text-sm font-semibold text-gray-700 mb-2">
                 Due Date
               </label>
               <input
@@ -147,19 +161,19 @@ export default function NewOrderPage() {
                 required
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               />
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-gray-700">
+              <div className="flex items-center justify-between mb-3">
+                <label className="block text-sm font-semibold text-gray-700">
                   Line Items
                 </label>
                 <button
                   type="button"
                   onClick={addLineItem}
-                  className="text-sm text-blue-600 hover:text-blue-900"
+                  className="text-sm text-blue-600 hover:text-blue-900 font-medium transition-colors"
                 >
                   + Add Item
                 </button>
@@ -167,10 +181,10 @@ export default function NewOrderPage() {
 
               <div className="space-y-3">
                 {lineItems.map((item, index) => (
-                  <div key={index} className="border border-gray-200 rounded-md p-4">
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+                  <div key={index} className="border border-gray-200 rounded-xl p-5 bg-gray-50/50 hover:bg-gray-50 transition-colors">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
                       <div className="sm:col-span-2">
-                        <label className="block text-xs font-medium text-gray-500">
+                        <label className="block text-xs font-semibold text-gray-600 mb-1">
                           Description
                         </label>
                         <input
@@ -180,12 +194,12 @@ export default function NewOrderPage() {
                           onChange={(e) =>
                             updateLineItem(index, "description", e.target.value)
                           }
-                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                          className="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                           placeholder="Widget"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-500">
+                        <label className="block text-xs font-semibold text-gray-600 mb-1">
                           Quantity
                         </label>
                         <input
@@ -196,11 +210,11 @@ export default function NewOrderPage() {
                           onChange={(e) =>
                             updateLineItem(index, "quantity", e.target.value)
                           }
-                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                          className="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-500">
+                        <label className="block text-xs font-semibold text-gray-600 mb-1">
                           Unit Price ($)
                         </label>
                         <input
@@ -212,7 +226,7 @@ export default function NewOrderPage() {
                           onChange={(e) =>
                             updateLineItem(index, "unitPrice", e.target.value)
                           }
-                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                          className="block w-full px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                         />
                       </div>
                     </div>
@@ -220,7 +234,7 @@ export default function NewOrderPage() {
                       <button
                         type="button"
                         onClick={() => removeLineItem(index)}
-                        className="mt-2 text-sm text-red-600 hover:text-red-900"
+                        className="mt-3 text-sm text-red-600 hover:text-red-700 font-medium transition-colors"
                       >
                         Remove
                       </button>
@@ -230,17 +244,17 @@ export default function NewOrderPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between border-t border-gray-200 pt-4">
+            <div className="flex items-center justify-between border-t border-gray-200 pt-6">
               <div>
-                <span className="text-sm text-gray-500">Order Total:</span>
-                <span className="ml-2 text-lg font-bold text-gray-900">
+                <span className="text-sm text-gray-500 font-medium">Order Total:</span>
+                <span className="ml-2 text-2xl font-bold text-gray-900">
                   {formatCurrency(calculateTotal())}
                 </span>
               </div>
               <button
                 type="submit"
                 disabled={loading}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                className="btn-modern inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? "Creating..." : "Create Order"}
               </button>
