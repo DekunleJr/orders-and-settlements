@@ -40,6 +40,17 @@ export const calculateOrderStatus = async (orderId: string) => {
   return "pending";
 };
 
+export const createAuditLog = async (orderId: string, userId: string, oldStatus: string | undefined, newStatus: string) => {
+  await prisma.auditLog.create({
+    data: {
+      orderId,
+      userId,
+      oldStatus,
+      newStatus,
+    },
+  });
+};
+
 export const calculateOrderStatusFromData = (order: any) => {
   const orderTotal = order.lineItems.reduce(
     (sum: number, item: any) => sum + (item.quantity * item.unitPrice),
@@ -94,10 +105,14 @@ export const getOrderWithCalculations = async (orderId: string) => {
 
   // Persist status change to DB if needed
   if (calculatedStatus !== order.status) {
+    const oldStatus = order.status;
     await prisma.order.update({
       where: { id: orderId },
       data: { status: calculatedStatus },
     });
+    
+    // Create audit log entry for status change
+    await createAuditLog(orderId, order.userId, oldStatus, calculatedStatus);
   }
 
   return {

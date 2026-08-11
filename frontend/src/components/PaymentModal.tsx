@@ -2,21 +2,27 @@
 
 import { useState, FormEvent } from "react";
 import { api } from "@/lib/api";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, toISODateTime } from "@/lib/utils";
 
 interface PaymentModalProps {
   orderId: string;
   amountDue: number;
   onClose: () => void;
   onSuccess: () => void;
+  mode?: "payment" | "refund";
 }
 
-export default function PaymentModal({ orderId, amountDue, onClose, onSuccess }: PaymentModalProps) {
+export default function PaymentModal({ orderId, amountDue, onClose, onSuccess, mode = "payment" }: PaymentModalProps) {
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState("");
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const isRefund = mode === "refund";
+  const maxAmount = isRefund ? amountDue : amountDue;
+  const title = isRefund ? "Record Refund" : "Record Payment";
+  const buttonText = isRefund ? "Record Refund" : "Record Payment";
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -30,8 +36,8 @@ export default function PaymentModal({ orderId, amountDue, onClose, onSuccess }:
       return;
     }
 
-    if (parsedAmount > amountDue) {
-      setError(`Amount cannot exceed amount due (${formatCurrency(amountDue)})`);
+    if (parsedAmount > maxAmount) {
+      setError(`Amount cannot exceed ${formatCurrency(maxAmount)}`);
       setLoading(false);
       return;
     }
@@ -39,12 +45,13 @@ export default function PaymentModal({ orderId, amountDue, onClose, onSuccess }:
     try {
       await api.createPayment(orderId, {
         amount: parsedAmount,
-        date: date ? new Date(date).toISOString() : undefined,
+        date: date ? toISODateTime(date) : undefined,
         note: note || undefined,
+        isRefund,
       });
       onSuccess();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to record payment");
+      setError(err instanceof Error ? err.message : `Failed to ${mode}`);
     } finally {
       setLoading(false);
     }
@@ -54,14 +61,14 @@ export default function PaymentModal({ orderId, amountDue, onClose, onSuccess }:
     <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 max-w-md w-full">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-gray-900">Record Payment</h3>
+          <h3 className="text-lg font-bold text-gray-900">{title}</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
             ✕
           </button>
         </div>
 
         <div className="mb-4 p-3 bg-gray-50 rounded-md">
-          <span className="text-sm text-gray-600">Amount Due: </span>
+          <span className="text-sm text-gray-600">{isRefund ? "Refundable Amount: " : "Amount Due: "}</span>
           <span className="text-lg font-bold text-gray-900">{formatCurrency(amountDue)}</span>
         </div>
 
@@ -73,7 +80,7 @@ export default function PaymentModal({ orderId, amountDue, onClose, onSuccess }:
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Amount ($)</label>
+            <label className="block text-sm font-medium text-gray-700">{isRefund ? "Refund Amount ($)" : "Amount ($)"}</label>
             <input
               type="number"
               min="0.01"
@@ -88,12 +95,12 @@ export default function PaymentModal({ orderId, amountDue, onClose, onSuccess }:
 
           <div>
             <label className="block text-sm font-medium text-gray-700">Date</label>
-            <input
-              type="datetime-local"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            />
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              />
           </div>
 
           <div>
@@ -103,7 +110,7 @@ export default function PaymentModal({ orderId, amountDue, onClose, onSuccess }:
               onChange={(e) => setNote(e.target.value)}
               rows={2}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              placeholder="Payment note"
+              placeholder={isRefund ? "Refund reason" : "Payment note"}
             />
           </div>
 
@@ -120,7 +127,7 @@ export default function PaymentModal({ orderId, amountDue, onClose, onSuccess }:
               disabled={loading}
               className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
             >
-              {loading ? "Recording..." : "Record Payment"}
+              {loading ? "Processing..." : buttonText}
             </button>
           </div>
         </form>

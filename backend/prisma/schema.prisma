@@ -32,12 +32,14 @@ model Order {
   customerName  String
   dueDate       DateTime
   status        String    @default("pending")
+  version       Int       @default(0)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
   user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   lineItems     LineItem[]
   payments      Payment[]
+  auditLogs     AuditLog[]
 
   @@schema("orders_and_settlements")
   @@map("orders")
@@ -56,10 +58,25 @@ model LineItem {
   @@map("line_items")
 }
 
+model AuditLog {
+  id            String    @id @default(uuid())
+  orderId       String
+  userId        String
+  oldStatus     String?
+  newStatus     String
+  changedAt     DateTime  @default(now())
+
+  order         Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@schema("orders_and_settlements")
+  @@map("audit_logs")
+}
+
 model Payment {
   id            String    @id @default(uuid())
   orderId       String
   amount        Float     @db.DoublePrecision
+  isRefund      Boolean   @default(false)
   date          DateTime  @default(now())
   note          String?
   createdAt     DateTime  @default(now())

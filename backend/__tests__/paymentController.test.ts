@@ -1,5 +1,4 @@
 import { createPayment } from '../src/controllers/paymentController';
-import { z } from 'zod';
 
 // Mock the request and response objects
 const mockRequest = () => {
@@ -7,6 +6,7 @@ const mockRequest = () => {
     user: { userId: 'user-123' },
     params: { id: 'order-123' },
     body: {},
+    headers: {},
   } as any;
 };
 
@@ -29,6 +29,13 @@ jest.mock('../src/config/database', () => ({
       create: jest.fn(),
       findMany: jest.fn(),
     },
+    auditLog: {
+      create: jest.fn(),
+    },
+    $transaction: jest.fn((callback) => callback({
+      order: { update: jest.fn() },
+      payment: { create: jest.fn() },
+    })),
   },
 }));
 
@@ -57,6 +64,7 @@ describe('Payment Controller - Business Logic', () => {
         customerName: 'Test Corp',
         dueDate: new Date('2024-12-31'),
         status: 'partially_paid',
+        version: 0,
         lineItems: [
           { id: 'li-1', description: 'Item', quantity: 2, unitPrice: 250 },
         ],
@@ -95,6 +103,7 @@ describe('Payment Controller - Business Logic', () => {
         customerName: 'Test Corp',
         dueDate: new Date('2024-12-31'),
         status: 'partially_paid',
+        version: 0,
         lineItems: [
           { id: 'li-1', description: 'Item', quantity: 2, unitPrice: 250 },
         ],
@@ -113,8 +122,7 @@ describe('Payment Controller - Business Logic', () => {
       };
 
       (prisma.order.findFirst as jest.Mock).mockResolvedValue(mockOrder);
-      (prisma.payment.create as jest.Mock).mockResolvedValue(mockCreatedPayment);
-      (prisma.order.update as jest.Mock).mockResolvedValue({});
+      (prisma.$transaction as jest.Mock).mockResolvedValue([mockCreatedPayment, {}]);
 
       await createPayment(req, res);
 
@@ -138,6 +146,7 @@ describe('Payment Controller - Business Logic', () => {
         customerName: 'Test Corp',
         dueDate: new Date('2024-12-31'),
         status: 'pending',
+        version: 0,
         lineItems: [
           { id: 'li-1', description: 'Item', quantity: 1, unitPrice: 500 },
         ],
@@ -154,7 +163,7 @@ describe('Payment Controller - Business Logic', () => {
       };
 
       (prisma.order.findFirst as jest.Mock).mockResolvedValue(mockOrder);
-      (prisma.payment.create as jest.Mock).mockResolvedValue(mockCreatedPayment);
+      (prisma.$transaction as jest.Mock).mockResolvedValue([mockCreatedPayment, {}]);
 
       await createPayment(req, res);
 
@@ -179,6 +188,7 @@ describe('Payment Controller - Business Logic', () => {
         customerName: 'Test Corp',
         dueDate: new Date('2024-12-31'),
         status: 'partially_paid',
+        version: 0,
         lineItems: [
           { id: 'li-1', description: 'Item', quantity: 1, unitPrice: 500 },
         ],
@@ -197,8 +207,7 @@ describe('Payment Controller - Business Logic', () => {
       };
 
       (prisma.order.findFirst as jest.Mock).mockResolvedValue(mockOrder);
-      (prisma.payment.create as jest.Mock).mockResolvedValue(mockCreatedPayment);
-      (prisma.order.update as jest.Mock).mockResolvedValue({});
+      (prisma.$transaction as jest.Mock).mockResolvedValue([mockCreatedPayment, {}]);
 
       await createPayment(req, res);
 
@@ -246,6 +255,7 @@ describe('Payment Controller - Business Logic', () => {
         customerName: 'Test Corp',
         dueDate: new Date('2024-12-31'),
         status: 'pending',
+        version: 0,
         lineItems: [
           { id: 'li-1', description: 'Item', quantity: 1, unitPrice: 500 },
         ],
@@ -262,7 +272,7 @@ describe('Payment Controller - Business Logic', () => {
       };
 
       (prisma.order.findFirst as jest.Mock).mockResolvedValue(mockOrder);
-      (prisma.payment.create as jest.Mock).mockResolvedValue(mockCreatedPayment);
+      (prisma.$transaction as jest.Mock).mockResolvedValue([mockCreatedPayment, {}]);
       (prisma.order.update as jest.Mock).mockResolvedValue({});
 
       await createPayment(req, res);
@@ -293,6 +303,7 @@ describe('Payment Controller - Business Logic', () => {
         customerName: 'Test Corp',
         dueDate: new Date('2026-12-31'),
         status: 'pending',
+        version: 0,
         lineItems: [
           { id: 'li-1', description: 'Item', quantity: 1, unitPrice: 500 },
         ],
@@ -309,7 +320,7 @@ describe('Payment Controller - Business Logic', () => {
       };
 
       (prisma.order.findFirst as jest.Mock).mockResolvedValue(mockOrder);
-      (prisma.payment.create as jest.Mock).mockResolvedValue(mockCreatedPayment);
+      (prisma.$transaction as jest.Mock).mockResolvedValue([mockCreatedPayment, {}]);
       (prisma.order.update as jest.Mock).mockResolvedValue({});
 
       await createPayment(req, res);

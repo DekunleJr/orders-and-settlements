@@ -143,15 +143,12 @@ export default function NewOrderPage() {
               </label>
               <input
                 id="dueDate"
-                type="datetime-local"
+                type="date"
                 required
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               />
-              <p className="mt-1 text-xs text-gray-500">
-                Use ISO format: 2024-12-31T23:59
-              </p>
             </div>
 
             <div>

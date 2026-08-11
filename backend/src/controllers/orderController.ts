@@ -29,6 +29,7 @@ export const createOrder = async (req: Request, res: Response) => {
         userId,
         customerName,
         dueDate: new Date(dueDate),
+        version: 0,
         lineItems: {
           create: lineItems.map(item => ({
             description: item.description,

@@ -2,15 +2,15 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "commonjs",
-    "rootDir": "./src",
+    "rootDir": ".",
     "outDir": "./dist",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "sourceMap": true,
-    "noUncheckedIndexedAccess": true
+    "noUncheckedIndexedAccess": true,
+    "types": ["jest", "node"]
   },
-  "include": ["src", "src/generated/**/*"],
-  "exclude": ["__tests__"]
+  "include": ["src", "src/generated/**/*", "__tests__/**/*"]
 }

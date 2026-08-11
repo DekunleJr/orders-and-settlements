@@ -95,31 +95,45 @@ export default function DashboardPage() {
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 sm:px-0">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Orders</h2>
-            <div className="flex space-x-2">
-              {statusFilters.map((status) => (
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">Orders</h2>
+              <div className="flex items-center space-x-3">
+                <div className="flex space-x-2">
+                  {statusFilters.map((status) => (
+                    <button
+                      key={status}
+                      onClick={() => {
+                        setLoading(true);
+                        setFilter(status);
+                      }}
+                      className={`px-3 py-1.5 text-sm font-medium rounded-md ${
+                        filter === status
+                          ? "bg-blue-600 text-white"
+                          : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
+                      }`}
+                    >
+                      {status === "all"
+                        ? "All"
+                        : status === "partially_paid"
+                        ? "Partially Paid"
+                        : status.charAt(0).toUpperCase() + status.slice(1)}
+                    </button>
+                  ))}
+                </div>
                 <button
-                  key={status}
-                  onClick={() => {
-                    setLoading(true);
-                    setFilter(status);
+                  onClick={async () => {
+                    try {
+                      api.exportOrdersToCSV(orders);
+                    } catch (err) {
+                      setError(err instanceof Error ? err.message : "Failed to export orders");
+                    }
                   }}
-                  className={`px-3 py-1.5 text-sm font-medium rounded-md ${
-                    filter === status
-                      ? "bg-blue-600 text-white"
-                      : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
-                  }`}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
                 >
-                  {status === "all"
-                    ? "All"
-                    : status === "partially_paid"
-                    ? "Partially Paid"
-                    : status.charAt(0).toUpperCase() + status.slice(1)}
+                  Export CSV
                 </button>
-              ))}
+              </div>
             </div>
-          </div>
 
           {error && (
             <div className="rounded-md bg-red-50 p-4 mb-6">

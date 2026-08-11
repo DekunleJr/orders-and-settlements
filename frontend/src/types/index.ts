@@ -21,6 +21,7 @@ export interface Payment {
   id: string;
   orderId: string;
   amount: number;
+  isRefund: boolean;
   date: string;
   note: string | null;
   createdAt: string;
@@ -67,10 +68,20 @@ export interface CreatePaymentInput {
   amount: number;
   date?: string;
   note?: string;
+  isRefund?: boolean;
 }
 
 export interface ApiError {
   error: string;
   message: string;
   details?: Record<string, unknown>;
+}
+
+export interface AuditLog {
+  id: string;
+  orderId: string;
+  userId: string;
+  oldStatus: string | null;
+  newStatus: string;
+  changedAt: string;
 }

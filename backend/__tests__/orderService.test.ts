@@ -6,13 +6,16 @@ jest.mock('../src/config/database', () => ({
   default: {
     order: {
       findUnique: jest.fn(),
-      findFirst: jest.fn(),
+      update: jest.fn(),
     },
     lineItem: {
       findMany: jest.fn(),
     },
     payment: {
       findMany: jest.fn(),
+    },
+    auditLog: {
+      create: jest.fn(),
     },
   },
 }));
@@ -34,6 +37,7 @@ describe('Order Service - Business Logic', () => {
         status: 'pending',
         createdAt: new Date(),
         updatedAt: new Date(),
+        version: 0,
         lineItems: [
           { id: 'li-1', orderId: 'order-123', description: 'Widget A', quantity: 2, unitPrice: 100 },
           { id: 'li-2', orderId: 'order-123', description: 'Widget B', quantity: 1, unitPrice: 200 },
@@ -44,6 +48,7 @@ describe('Order Service - Business Logic', () => {
       };
 
       (prisma.order.findUnique as jest.Mock).mockResolvedValue(mockOrder);
+      (prisma.order.update as jest.Mock).mockResolvedValue({});
 
       const result = await getOrderWithCalculations('order-123');
 
@@ -65,6 +70,7 @@ describe('Order Service - Business Logic', () => {
         status: 'pending',
         createdAt: new Date(),
         updatedAt: new Date(),
+        version: 0,
         lineItems: [
           { id: 'li-3', orderId: 'order-456', description: 'Item A', quantity: 1, unitPrice: 500 },
         ],
@@ -72,6 +78,7 @@ describe('Order Service - Business Logic', () => {
       };
 
       (prisma.order.findUnique as jest.Mock).mockResolvedValue(mockOrder);
+      (prisma.order.update as jest.Mock).mockResolvedValue({});
 
       const result = await getOrderWithCalculations('order-456');
 
@@ -90,6 +97,7 @@ describe('Order Service - Business Logic', () => {
         status: 'paid',
         createdAt: new Date(),
         updatedAt: new Date(),
+        version: 0,
         lineItems: [
           { id: 'li-4', orderId: 'order-789', description: 'Item X', quantity: 3, unitPrice: 100 },
         ],
@@ -120,6 +128,7 @@ describe('Order Service - Business Logic', () => {
         status: 'partially_paid',
         createdAt: new Date(),
         updatedAt: new Date(),
+        version: 0,
         lineItems: [
           { id: 'li-5', orderId: 'order-multi', description: 'Item M', quantity: 1, unitPrice: 1000 },
         ],
@@ -131,6 +140,7 @@ describe('Order Service - Business Logic', () => {
       };
 
       (prisma.order.findUnique as jest.Mock).mockResolvedValue(mockOrder);
+      (prisma.order.update as jest.Mock).mockResolvedValue({});
 
       const result = await getOrderWithCalculations('order-multi');
 
@@ -149,6 +159,7 @@ describe('Order Service - Business Logic', () => {
         status: 'pending',
         createdAt: new Date(),
         updatedAt: new Date(),
+        version: 0,
         lineItems: [
           { id: 'li-6', orderId: 'order-decimal', description: 'Item D', quantity: 3, unitPrice: 99.99 },
         ],

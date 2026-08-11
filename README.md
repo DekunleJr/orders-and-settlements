@@ -305,22 +305,40 @@ Record a payment against an order.
 1. Users can only access their own orders (enforced at database query level)
 2. Orders are immutable after payments (simplifies accounting)
 3. No tax or discount calculations (per requirements)
-4. No refunds implemented (stretch goal, not required)
-5. Single currency (no multi-currency support)
+4. Single currency (no multi-currency support)
 
 ### Tradeoffs:
-1. **No optimistic locking**: Concurrent payment submissions could theoretically cause issues, but the validation logic prevents over-payment
+1. **Optimistic locking**: Order version field prevents concurrent payment conflicts. If two payments are submitted simultaneously, one will receive a 409 Conflict error and the user must retry.
 2. **Synchronous status updates**: Status is updated immediately after each payment
-3. **No audit log**: Status changes are not tracked with timestamps (stretch goal)
-4. **Simple auth**: Email/password only, no OAuth or 2FA
+3. **Simple auth**: Email/password only, no OAuth or 2FA
+
+## Implemented Stretch Goals
+
+### Refunds
+- Record refunds as negative payments via `POST /api/orders/:id/payments` with `isRefund: true`
+- Refunds cannot exceed the net paid amount (payments minus previous refunds)
+- Refunds are displayed with red indicators in the payment history
+- Refunds increment the order version for optimistic locking
+
+### Audit Log
+- All status changes are automatically logged with `GET /api/orders/:id/audit-log`
+- Each log entry contains: old status, new status, timestamp, and user ID
+- Viewable from the order detail page via "Show Audit Log" button
+- Provides complete history of order status transitions
+
+### CSV Export
+- Export all orders with `GET /api/orders/export?startDate=&endDate=`
+- Includes order details, line items, and payment history
+- Accessible from dashboard via "Export CSV" button
+- Supports date range filtering
 
 ## What Would Be Improved Before Production
 
-1. **Testing**: Add comprehensive test suite with Jest
-   - Payment allocation logic
-   - Status transitions
-   - Over-payment rejection
-   - Edge cases (concurrent payments, timezone handling)
+1. **Testing**: Expand test coverage
+   - Refund validation logic
+   - Audit log creation
+   - CSV export functionality
+   - Concurrent payment scenarios
 
 2. **Security**:
    - Rate limiting on auth endpoints
@@ -340,11 +358,10 @@ Record a payment against an order.
    - Database query logging
 
 5. **Features**:
-   - Export to CSV
    - Email notifications
-   - Audit log for status changes
-   - Refunds support
    - Invoice generation
+   - Bulk operations
+   - Advanced reporting
 
 6. **Deployment**:
    - Docker containerization
@@ -360,6 +377,40 @@ Record a payment against an order.
 | DATABASE_URL | PostgreSQL connection string | Yes |
 | PORT | Server port (default: 5000) | No |
 | JWT_SECRET | Secret key for JWT signing | Yes |
+
+## Optimistic Locking
+
+The system uses optimistic locking to handle concurrent payment submissions:
+
+1. Each order has a `version` field that increments on every modification
+2. When recording a payment, the client sends the current version in the `X-Order-Version` header
+3. If the version doesn't match the database, a `409 Conflict` error is returned
+4. The client should refresh the order data and retry with the new version
+
+**Example Conflict Response:**
+```json
+{
+  "error": "Conflict",
+  "message": "Order was modified by another request. Please refresh and try again.",
+  "details": {
+    "currentVersion": 3
+  }
+}
+```
+
+## Order Status Derivation Rules
+
+### Status Values:
+- **pending**: No payments recorded
+- **partially_paid**: Some payments recorded, but less than order total
+- **paid**: Total payments equal or exceed order total
+- **overdue**: Past due date and not fully paid
+
+### Edge Cases:
+1. **Overdue → Paid**: If an order becomes overdue but is then fully paid, the status becomes "paid" (not "overdue")
+2. **Partial payments**: Status updates after each payment
+3. **Date handling**: Status is calculated based on the current date vs. due date
+4. **Refunds**: Refunds (negative payments) reduce the amount paid, potentially changing status from paid to partially_paid or overdue
 
 ## Sample Workflow
 

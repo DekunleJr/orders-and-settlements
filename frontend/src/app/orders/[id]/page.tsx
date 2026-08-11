@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
-import { Order } from "@/types";
+import { Order, AuditLog } from "@/types";
 import StatusBadge from "@/components/StatusBadge";
 import PaymentModal from "@/components/PaymentModal";
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
@@ -18,6 +18,9 @@ export default function OrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showRefundModal, setShowRefundModal] = useState(false);
+  const [showAuditLog, setShowAuditLog] = useState(false);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
 
   const fetchOrder = () => {
     if (!token || !params.id) return;
@@ -31,6 +34,16 @@ export default function OrderDetailPage() {
         setError(err instanceof Error ? err.message : "Failed to fetch order");
       })
       .finally(() => setLoading(false));
+  };
+
+  const fetchAuditLog = async () => {
+    if (!token || !params.id) return;
+    try {
+      const logs = await api.getAuditLog(params.id as string);
+      setAuditLogs(logs);
+    } catch (err) {
+      console.error("Failed to fetch audit log:", err);
+    }
   };
 
   useEffect(() => {
@@ -147,14 +160,35 @@ export default function OrderDetailPage() {
           <div className="px-6 py-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-lg font-bold text-gray-900">Payment History</h3>
-              {!isFullyPaid && (
+              <div className="flex space-x-2">
+                {!isFullyPaid && (
+                  <button
+                    onClick={() => setShowPaymentModal(true)}
+                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                  >
+                    Record Payment
+                  </button>
+                )}
+                {(order.amountPaid ?? 0) > 0 && (
+                  <button
+                    onClick={() => setShowRefundModal(true)}
+                    className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+                  >
+                    Record Refund
+                  </button>
+                )}
                 <button
-                  onClick={() => setShowPaymentModal(true)}
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                  onClick={() => {
+                    if (!showAuditLog) {
+                      fetchAuditLog();
+                    }
+                    setShowAuditLog(!showAuditLog);
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
                 >
-                  Record Payment
+                  {showAuditLog ? "Hide Audit Log" : "Show Audit Log"}
                 </button>
-              )}
+              </div>
             </div>
 
             {order.payments && order.payments.length > 0 ? (
@@ -163,6 +197,7 @@ export default function OrderDetailPage() {
                   <tr>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Note</th>
                   </tr>
                 </thead>
@@ -170,7 +205,16 @@ export default function OrderDetailPage() {
                   {order.payments.map((payment) => (
                     <tr key={payment.id}>
                       <td className="px-4 py-3 text-sm text-gray-500">{formatDateTime(payment.date)}</td>
-                      <td className="px-4 py-3 text-sm font-medium text-gray-900">{formatCurrency(payment.amount)}</td>
+                      <td className={`px-4 py-3 text-sm font-medium ${payment.amount < 0 ? "text-red-600" : "text-gray-900"}`}>
+                        {formatCurrency(payment.amount)}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        {payment.isRefund ? (
+                          <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded">Refund</span>
+                        ) : (
+                          <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded">Payment</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-sm text-gray-500">{payment.note || "-"}</td>
                     </tr>
                   ))}
@@ -193,6 +237,54 @@ export default function OrderDetailPage() {
             fetchOrder();
           }}
         />
+      )}
+
+      {showRefundModal && (
+        <PaymentModal
+          orderId={order.id}
+          amountDue={order.amountPaid ?? 0}
+          mode="refund"
+          onClose={() => setShowRefundModal(false)}
+          onSuccess={() => {
+            setShowRefundModal(false);
+            fetchOrder();
+          }}
+        />
+      )}
+
+      {showAuditLog && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-900">Audit Log</h3>
+              <button onClick={() => setShowAuditLog(false)} className="text-gray-400 hover:text-gray-600">
+                ✕
+              </button>
+            </div>
+            {auditLogs.length === 0 ? (
+              <p className="text-sm text-gray-500">No status changes recorded</p>
+            ) : (
+              <div className="space-y-3">
+            {auditLogs.map((log: AuditLog) => (
+                  <div key={log.id} className="border border-gray-200 rounded-md p-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm font-medium text-gray-900">
+                          {log.oldStatus || "N/A"}
+                        </span>
+                        <span className="text-gray-500">→</span>
+                        <span className="text-sm font-medium text-gray-900">{log.newStatus}</span>
+                      </div>
+                      <span className="text-xs text-gray-500">
+                        {new Date(log.changedAt).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

@@ -1,4 +1,5 @@
-import { AuthResponse, CreateOrderInput, CreatePaymentInput, Order, UpdateOrderInput, ApiError, Payment } from "@/types";
+import Papa from "papaparse";
+import { AuthResponse, CreateOrderInput, CreatePaymentInput, Order, UpdateOrderInput, ApiError, Payment, AuditLog } from "@/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -20,7 +21,7 @@ class ApiClient {
     const token = this.getToken();
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      ...(options.headers as Record<string, string>),
+      ...(options.headers ? (options.headers as Record<string, string>) : {}),
     };
 
     if (token) {
@@ -95,6 +96,60 @@ class ApiClient {
       method: "POST",
       body: JSON.stringify(input),
     });
+  }
+
+  async createRefund(orderId: string, input: CreatePaymentInput): Promise<Payment> {
+    return this.request<Payment>(`/api/orders/${orderId}/payments`, {
+      method: "POST",
+      headers: {
+        "X-Order-Version": "0",
+      },
+      body: JSON.stringify({ ...input, isRefund: true }),
+    });
+  }
+
+  async getAuditLog(orderId: string): Promise<AuditLog[]> {
+    return this.request<AuditLog[]>(`/api/orders/${orderId}/audit-log`);
+  }
+
+  exportOrdersToCSV(orders: Order[]): void {
+    if (orders.length === 0) {
+      throw new Error("No orders to export");
+    }
+
+    const csvData = orders.map((order) => {
+      const orderTotal = order.lineItems?.reduce(
+        (sum, item) => sum + item.quantity * item.unitPrice,
+        0
+      ) || 0;
+      
+      const amountPaid = order.payments?.reduce(
+        (sum, payment) => sum + payment.amount,
+        0
+      ) || 0;
+      
+      const amountDue = orderTotal - amountPaid;
+
+      return {
+        "Order ID": order.id,
+        Customer: order.customerName,
+        "Due Date": new Date(order.dueDate).toISOString().split('T')[0],
+        Status: order.status,
+        "Order Total": orderTotal.toFixed(2),
+        "Amount Paid": amountPaid.toFixed(2),
+        "Amount Due": amountDue.toFixed(2),
+        "Created At": new Date(order.createdAt).toISOString(),
+      };
+    });
+
+    const csv = Papa.unparse(csvData);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `orders_export_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
   }
 }
 
