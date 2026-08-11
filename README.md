@@ -51,6 +51,7 @@ Create a `.env` file in the backend directory:
 DATABASE_URL=postgresql://user:password@host:5432/database?schema=orders_and_settlements
 PORT=5000
 JWT_SECRET=your-secret-key-here
+CORS_ORIGIN=frontend_url
 ```
 
 ### 4. Database Setup
@@ -63,7 +64,7 @@ npx prisma generate
 npx prisma db push
 ```
 
-### 5. Start the server
+### 5. Start the Backend Server
 
 ```bash
 # Development mode
@@ -75,6 +76,31 @@ npm start
 ```
 
 The API will be available at `http://localhost:5000`
+
+### 6. Frontend Setup
+
+Open a new terminal window:
+
+```bash
+cd frontend
+npm install
+```
+
+### 7. Frontend Environment Configuration
+
+Create a `.env.local` file in the frontend directory:
+
+```env
+NEXT_PUBLIC_API_URL=backend_url
+```
+
+### 8. Start the Frontend Development Server
+
+```bash
+npm run dev
+```
+
+The frontend will be available at `http://localhost:3000`
 
 ## API Documentation
 
@@ -332,43 +358,84 @@ Record a payment against an order.
 - Accessible from dashboard via "Export CSV" button
 - Supports date range filtering
 
-## What Would Be Improved Before Production
+## Production Deployment
 
-1. **Testing**: Expand test coverage
-   - Refund validation logic
-   - Audit log creation
-   - CSV export functionality
-   - Concurrent payment scenarios
+### Backend Deployment
 
-2. **Security**:
-   - Rate limiting on auth endpoints
-   - Input sanitization
-   - CORS configuration for specific domains
-   - HTTPS enforcement
-   - Refresh tokens (currently only access tokens)
+1. **Build the backend:**
+   ```bash
+   cd backend
+   npm run build
+   ```
 
-3. **Performance**:
-   - Database indexing on userId, status, dueDate
-   - Caching for dashboard queries
-   - Pagination for large order lists
+2. **Set production environment variables:**
+   ```env
+   DATABASE_URL=postgresql://user:password@host:5432/database?schema=orders_and_settlements
+   PORT=5000
+   JWT_SECRET=your-production-secret-key
+   CORS_ORIGIN=https://your-frontend-domain.com
+   NODE_ENV=production
+   ```
 
-4. **Monitoring**:
-   - Error logging (Winston, Datadog)
-   - Performance monitoring
-   - Database query logging
+3. **Run database migrations:**
+   ```bash
+   npx prisma generate
+   npx prisma db push
+   ```
 
-5. **Features**:
-   - Email notifications
-   - Invoice generation
-   - Bulk operations
-   - Advanced reporting
+4. **Start the server:**
+   ```bash
+   npm start
+   ```
 
-6. **Deployment**:
-   - Docker containerization
-   - CI/CD pipeline
-   - Database backups
-   - Health checks
-   - Graceful shutdown
+5. **Recommended:** Use a process manager like PM2:
+   ```bash
+   npm install -g pm2
+   pm2 start dist/server.js --name orders-api
+   pm2 save
+   pm2 startup
+   ```
+
+### Frontend Deployment
+
+1. **Build the frontend:**
+   ```bash
+   cd frontend
+   npm run build
+   ```
+
+2. **Set production environment variables:**
+   ```env
+   NEXT_PUBLIC_API_URL=https://your-backend-domain.com
+   ```
+
+3. **Start the production server:**
+   ```bash
+   npm start
+   ```
+
+4. **Alternative:** Deploy to Vercel/Netlify:
+   - Connect your Git repository
+   - Set environment variables in the platform dashboard
+   - Deploy automatically on push to main branch
+
+### Full Stack Deployment Options
+
+**Option 1: Separate Hosting (Recommended)**
+- Backend: Deploy to Railway, Render, or DigitalOcean
+- Frontend: Deploy to Vercel or Netlify
+- Database: Use Supabase, Neon, or managed PostgreSQL
+
+**Option 2: Docker**
+- Build a Docker image for the backend
+- Build a Docker image for the frontend
+- Use docker-compose to orchestrate
+
+**Option 3: Monolithic**
+- Serve the Next.js frontend from the Express backend
+- Add a catch-all route in Express to serve Next.js pages
+
+
 
 ## Environment Variables
 
