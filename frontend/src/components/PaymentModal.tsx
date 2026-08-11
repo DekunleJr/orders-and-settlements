@@ -7,12 +7,13 @@ import { formatCurrency, toISODateTime } from "@/lib/utils";
 interface PaymentModalProps {
   orderId: string;
   amountDue: number;
+  orderVersion: number;
   onClose: () => void;
   onSuccess: () => void;
   mode?: "payment" | "refund";
 }
 
-export default function PaymentModal({ orderId, amountDue, onClose, onSuccess, mode = "payment" }: PaymentModalProps) {
+export default function PaymentModal({ orderId, amountDue, orderVersion, onClose, onSuccess, mode = "payment" }: PaymentModalProps) {
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState("");
   const [note, setNote] = useState("");
@@ -48,7 +49,7 @@ export default function PaymentModal({ orderId, amountDue, onClose, onSuccess, m
         date: date ? toISODateTime(date) : undefined,
         note: note || undefined,
         isRefund,
-      });
+      }, orderVersion);
       onSuccess();
     } catch (err) {
       setError(err instanceof Error ? err.message : `Failed to ${mode}`);

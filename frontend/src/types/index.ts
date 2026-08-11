@@ -35,6 +35,7 @@ export interface Order {
   customerName: string;
   dueDate: string;
   status: OrderStatus;
+  version: number;
   createdAt: string;
   updatedAt: string;
   lineItems?: LineItem[];

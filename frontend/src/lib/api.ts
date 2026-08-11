@@ -91,18 +91,21 @@ class ApiClient {
   }
 
   // Payments
-  async createPayment(orderId: string, input: CreatePaymentInput): Promise<Payment> {
+  async createPayment(orderId: string, input: CreatePaymentInput, orderVersion: number): Promise<Payment> {
     return this.request<Payment>(`/api/orders/${orderId}/payments`, {
       method: "POST",
+      headers: {
+        "X-Order-Version": String(orderVersion),
+      },
       body: JSON.stringify(input),
     });
   }
 
-  async createRefund(orderId: string, input: CreatePaymentInput): Promise<Payment> {
+  async createRefund(orderId: string, input: CreatePaymentInput, orderVersion: number): Promise<Payment> {
     return this.request<Payment>(`/api/orders/${orderId}/payments`, {
       method: "POST",
       headers: {
-        "X-Order-Version": "0",
+        "X-Order-Version": String(orderVersion),
       },
       body: JSON.stringify({ ...input, isRefund: true }),
     });

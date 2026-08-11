@@ -263,6 +263,7 @@ export default function OrderDetailPage() {
         <PaymentModal
           orderId={order.id}
           amountDue={order.amountDue ?? 0}
+          orderVersion={order.version}
           onClose={() => setShowPaymentModal(false)}
           onSuccess={() => {
             setShowPaymentModal(false);
@@ -275,6 +276,7 @@ export default function OrderDetailPage() {
         <PaymentModal
           orderId={order.id}
           amountDue={order.amountPaid ?? 0}
+          orderVersion={order.version}
           mode="refund"
           onClose={() => setShowRefundModal(false)}
           onSuccess={() => {

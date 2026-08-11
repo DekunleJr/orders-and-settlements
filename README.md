@@ -353,10 +353,9 @@ Record a payment against an order.
 - Provides complete history of order status transitions
 
 ### CSV Export
-- Export all orders with `GET /api/orders/export?startDate=&endDate=`
-- Includes order details, line items, and payment history
-- Accessible from dashboard via "Export CSV" button
-- Supports date range filtering
+- Export all orders from the dashboard via the "Export CSV" button
+- CSV is generated client-side (PapaParse) with order details, line items, and payment history
+- No backend endpoint required; exports the current filtered view
 
 ## Production Deployment
 

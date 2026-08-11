@@ -8,7 +8,6 @@ import {
   deleteOrder,
 } from "../controllers/orderController";
 import { createPayment, getAuditLog } from "../controllers/paymentController";
-import { exportOrdersCSV } from "../controllers/exportController";
 
 const router = Router();
 
@@ -234,34 +233,5 @@ router.post("/:id/payments", createPayment);
  *         description: Unauthorized
  */
 router.get("/:id/audit-log", getAuditLog);
-
-/**
- * @swagger
- * /api/orders/export:
- *   get:
- *     tags: [Orders]
- *     summary: Export orders as CSV
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: startDate
- *         schema:
- *           type: string
- *           format: date-time
- *         description: Start date for export
- *       - in: query
- *         name: endDate
- *         schema:
- *           type: string
- *           format: date-time
- *         description: End date for export
- *     responses:
- *       200:
- *         description: CSV file download
- *       401:
- *         description: Unauthorized
- */
-router.get("/export", exportOrdersCSV);
 
 export default router;
