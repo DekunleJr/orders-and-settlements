@@ -405,7 +405,7 @@ Record a payment against an order.
 
 2. **Set production environment variables:**
    ```env
-   NEXT_PUBLIC_API_URL=https://your-backend-domain.com
+NEXT_PUBLIC_API_URL=https://orders-and-settlements-production.up.railway.app/
    ```
 
 3. **Start the production server:**
