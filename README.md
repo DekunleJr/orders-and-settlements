@@ -338,6 +338,33 @@ Record a payment against an order.
 2. **Synchronous status updates**: Status is updated immediately after each payment
 3. **Simple auth**: Email/password only, no OAuth or 2FA
 
+## What You Would Improve Before Production
+
+1. **Testing**: Add unit tests, integration tests, and end-to-end (E2E) tests for all API endpoints and frontend flows. Currently there are no automated tests.
+2. **Security**:
+   - Add rate limiting on authentication endpoints to prevent brute-force attacks
+   - Implement account lockout after failed login attempts
+   - Use refresh tokens with short-lived access tokens instead of long-lived JWTs
+   - Enforce HTTPS/TLS for all traffic in production
+   - Store secrets in a secrets manager (e.g., AWS Secrets Manager) rather than `.env` files
+   - Add CSRF protection if using cookie-based session auth
+3. **Observability**:
+   - Add structured logging (e.g., Winston or Pino) with log rotation
+   - Integrate error tracking (e.g., Sentry) for real-time error monitoring
+   - Add performance monitoring / health check endpoints
+4. **CI/CD**: Set up automated pipelines for testing, linting, and deployment on every push to main.
+5. **Database**:
+   - Use a proper migration tool (e.g., Prisma Migrate) instead of `db push`
+   - Set up connection pooling (e.g., PgBouncer) for production workloads
+   - Add database backups and a recovery plan
+6. **Frontend**:
+   - Add client-side form validation with a library (e.g., Zod + React Hook Form) for better UX
+   - Add a password strength indicator on signup
+   - Improve accessibility (ARIA labels, keyboard navigation)
+   - Add offline support / error boundaries for resilience
+   - Restrict CORS_ORIGIN to specific allowlisted domains instead of a wildcard or broad origin
+7. **API**: Add API versioning, pagination on list endpoints, and request validation schemas (e.g., Zod) for consistent input handling.
+
 ## Implemented Stretch Goals
 
 ### Refunds
@@ -435,6 +462,13 @@ NEXT_PUBLIC_API_URL=https://orders-and-settlements-production.up.railway.app/
 - Add a catch-all route in Express to serve Next.js pages
 
 
+
+## Deployed URLs
+
+| Component | URL |
+|---------|-----|
+| Frontend (Netlify) | https://orders-and-settlements.netlify.app/ |
+| Backend (Railway) | https://orders-and-settlements-production.up.railway.app/ |
 
 ## Environment Variables
 
